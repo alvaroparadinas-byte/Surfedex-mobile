@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>Surfedex — Global Surf Reference</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <link rel="stylesheet" href="styles.css?v=20260603i" />
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#0a1119"/>
+      <path d="M15 58 Q25 48 35 58 T55 58 T75 58 T95 58" stroke="#3DA8FF" stroke-width="3" fill="none"/>
+      <path d="M15 68 Q25 58 35 68 T55 68 T75 68 T95 68" stroke="#3DA8FF" stroke-width="2.4" fill="none" opacity="0.55"/>
+      <circle cx="50" cy="38" r="4" fill="#FFD13D"/>
+      <circle cx="68" cy="44" r="4" fill="#3DA8FF"/>
+      <circle cx="34" cy="45" r="4" fill="#36C5A6"/>
+    </svg>
+  </template>
+</head>
+<body>
+  <!-- Splash de carga: logo sobre fondo plano + barra rápida (~1 s) -->
+  <div id="splash">
+    <img class="splash-logo" src="surfedex-logo.png" alt="Surfedex" />
+    <div class="splash-bar"><i></i></div>
+  </div>
+  <script>
+    (function () {
+      var splash = document.getElementById("splash");
+      if (!splash) return;
+      // Deja ~1 s viendo el logo y luego se desvanece; se quita del DOM al acabar.
+      var remove = function () {
+        if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+      };
+      var hide = function () {
+        splash.classList.add("done");
+        splash.addEventListener("transitionend", remove, { once: true });
+        // Fallback: si la transición no dispara (pestaña en segundo plano), lo quitamos igual.
+        setTimeout(remove, 700);
+      };
+      setTimeout(hide, 1000);
+    })();
+  </script>
+  <div class="app">
+    <!-- ===================== MAPA ===================== -->
+    <div id="map">
+      <!-- HUD superior -->
+      <div class="hud-top">
+        <div class="brand">
+          <img class="brand-logo" src="surfedex-logo.png" alt="Surfedex" />
+          <div class="brand-text">
+            <span class="sub">Global Surf Reference</span>
+          </div>
+        </div>
+
+        <div class="hud-coord">
+          <div class="row">
+            <span>LAT <b id="coord-lat">—</b></span>
+            <span>LON <b id="coord-lng">—</b></span>
+            <span><b id="coord-z">Z2</b></span>
+          </div>
+          <div class="row">
+            <span style="color:var(--fg-3)">CARTOGRAFÍA OSM · WGS84</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Escalera de niveles de zoom -->
+      <div class="zoom-ladder">
+        <button data-level="region" class="active"><span class="dot"></span>España</button>
+        <button data-level="zone"><span class="dot"></span>Zona</button>
+        <button data-level="area"><span class="dot"></span>Área</button>
+        <button data-level="spot"><span class="dot"></span>Spot</button>
+      </div>
+
+      <!-- Barra de herramientas: capa base + calibración -->
+      <div class="map-toolbar">
+        <button class="tool-calib" id="calib-btn" title="Arrastra los pines a su coordenada exacta">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <circle cx="6.5" cy="6.5" r="2" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M6.5 0v3M6.5 10v3M0 6.5h3M10 6.5h3" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+          Calibrar
+        </button>
+        <button class="tool-add" id="addspot-btn" title="Añade un spot haciendo click en el mapa">＋ Spot</button>
+        <button class="tool-export" id="export-data-btn" title="Exporta tus spots y cambios para guardarlos">⇪ Exportar</button>
+        <button class="tool-wind" id="wind-btn" title="Capas meteo en vivo sobre el mapa">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M1 4.5h7.5a1.8 1.8 0 1 0-1.8-1.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M1 7.5h9.5a1.8 1.8 0 1 1-1.8 1.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M1 10.5h5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          Meteo
+        </button>
+      </div>
+
+      <!-- Overlay meteo en vivo (Windy) -->
+      <div id="wind-overlay" class="wind-overlay">
+        <div class="wind-bar">
+          <span class="wind-live"><span class="wd"></span>En vivo</span>
+          <div class="wind-seg" id="wind-seg">
+            <button data-ov="wind" class="active">Viento</button>
+            <button data-ov="rain">Lluvia</button>
+            <button data-ov="waves">Swell</button>
+          </div>
+          <button class="wind-close" id="wind-close" title="Cerrar">✕ Cerrar</button>
+        </div>
+        <div class="wind-frame" id="wind-frame"></div>
+      </div>
+
+      <!-- Crosshair decorativo -->
+      <div class="crosshair"></div>
+
+      <!-- HUD inferior -->
+      <div class="hud-bottom">
+        <div class="legend">
+          <div class="item"><span class="legend-dot consistent"></span> Consistente</div>
+          <div class="item"><span class="legend-dot occasional"></span> Ocasional</div>
+          <div class="item"><span class="legend-dot easter"></span> Top spot</div>
+        </div>
+        <div class="scale">
+          <span>ESCALA</span>
+          <div class="scale-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pestaña para ocultar/mostrar el panel lateral -->
+    <button id="panel-toggle" class="panel-toggle" title="Ocultar panel" aria-label="Ocultar panel">›</button>
+    <!-- Ampliar/reducir el ancho del panel (solo desktop) -->
+    <button id="panel-expand" class="panel-expand" title="Ampliar panel" aria-label="Ampliar panel">⤢</button>
+
+    <!-- ===================== PANEL DERECHO ===================== -->
+    <aside class="panel">
+      <button class="sheet-handle" id="sheet-handle" aria-label="Mostrar u ocultar el panel">
+        <span class="grip"></span>
+        <span class="sheet-hint" id="sheet-hint">Explorar</span>
+      </button>
+      <div class="panel-search">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4.5" stroke="#aeb9c4" stroke-width="1.3"/>
+            <path d="M9.5 9.5L13 13" stroke="#aeb9c4" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <input id="search-input" type="text" placeholder="Buscar spot, zona o región…" autocomplete="off" />
+          <button class="search-clear" id="search-clear">ESC</button>
+        </div>
+        <div class="search-results" id="search-results"></div>
+      </div>
+
+      <div class="panel-body" id="panel-body"></div>
+    </aside>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data/spots.js"></script>
+  <script src="data/photos.js"></script>
+  <script src="data/baked.js"></script>
+  <!-- ► DATOS REALES: backend Surfedex en producción (Render). Si el backend no
+       tiene un spot, la UI muestra "Previsión no disponible" (sin datos de ejemplo). -->
+  <script>window.SURFEDEX_FORECAST_API = "https://surfedex-mobile.onrender.com";</script>
+  <script src="forecast.js?v=20260603i"></script>
+  <script src="app.js?v=20260603i"></script>
+</body>
+</html>
