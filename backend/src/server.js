@@ -40,7 +40,7 @@ app.listen(PORT, () => {
   // primera sincronización al arrancar (si hay clave)
   if (process.env.STORMGLASS_API_KEY) {
     syncAll().catch((e) => console.error("[sync inicial]", e.message));
-    const expr = process.env.SYNC_CRON || "0 */4 * * *";
+    const expr = process.env.SYNC_CRON || "0 6 * * *";
     cron.schedule(expr, () => syncAll().catch((e) => console.error("[cron]", e.message)));
     console.log(`[server] sincronización programada: "${expr}"`);
   } else {

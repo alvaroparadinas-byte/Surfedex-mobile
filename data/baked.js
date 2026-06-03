@@ -425,6 +425,46 @@ window.SURFMACH_BAKED = {
       "season": "Septiembre - Mayo",
       "hazards": "—",
       "notes": "Playa situada bajo espectaculares acantilados. Requiere bajar y subir bastantes escalones."
+    },
+    {
+      "id": "custom-mpxrnyqk",
+      "lat": 43.37646,
+      "lng": -2.55148,
+      "tags": [],
+      "custom": true,
+      "name": "Ogeia",
+      "area": "pv-gipuzkoa",
+      "icon": "occasional",
+      "wave": "Reef break técnico",
+      "bottom": "Roca",
+      "swell": "N / NW, 1.5–2.5m, 10–14s",
+      "wind": "S / Sw",
+      "tide": "Media",
+      "level": "Avanzado",
+      "crowd": "Baja",
+      "season": "Otoño – invierno",
+      "hazards": "Entrada por las rocas y corriente",
+      "notes": "Spot salvaje y escondido, rodeado de acantilados. Solo recomendable para surfistas expertos que buscan olas de calidad sin multitudes."
+    },
+    {
+      "id": "custom-mpxrqqes",
+      "lat": 43.39728,
+      "lng": -2.61836,
+      "tags": [],
+      "custom": true,
+      "name": "Lekeitio",
+      "area": "pv-gipuzkoa",
+      "icon": "occasional",
+      "wave": "BEach break suave",
+      "bottom": "Arena",
+      "swell": "NW, 1–2m, 8–12s",
+      "wind": "S / SE",
+      "tide": "aLTA",
+      "level": "Principiante",
+      "crowd": "Alta",
+      "season": "Invierno",
+      "hazards": "Zonas de baño y zonas rocosas a los lados",
+      "notes": "laya muy resguardada. Solo surfeable cuando el mar está grande en el resto de la costa y entra con mucha fuerza en la bahía de Lekeitio."
     }
   ],
   "coordOverrides": {
@@ -911,6 +951,82 @@ window.SURFMACH_BAKED = {
     "lourido": {
       "lat": 42.89501,
       "lng": -9.13416
+    },
+    "la-arena": {
+      "lat": 43.34841,
+      "lng": -3.11699
+    },
+    "barinatxe": {
+      "lat": 43.38224,
+      "lng": -3.00695
+    },
+    "menakoz": {
+      "lat": 43.39516,
+      "lng": -2.9851
+    },
+    "punta-galea": {
+      "lat": 43.37076,
+      "lng": -3.03676
+    },
+    "gorliz": {
+      "lat": 43.41814,
+      "lng": -2.94612
+    },
+    "plentzia": {
+      "lat": 43.41176,
+      "lng": -2.94796
+    },
+    "armintza": {
+      "lat": 43.43265,
+      "lng": -2.8925
+    },
+    "bakio": {
+      "lat": 43.43037,
+      "lng": -2.80628
+    },
+    "mundaka": {
+      "lat": 43.40849,
+      "lng": -2.697
+    },
+    "laga": {
+      "lat": 43.40927,
+      "lng": -2.65882
+    },
+    "saturraran": {
+      "lat": 43.32205,
+      "lng": -2.41076
+    },
+    "deba": {
+      "lat": 43.298,
+      "lng": -2.35284
+    },
+    "malkorbe": {
+      "lat": 43.30271,
+      "lng": -2.20235
+    },
+    "zarautz": {
+      "lat": 43.28814,
+      "lng": -2.16722
+    },
+    "la-antilla": {
+      "lat": 43.2886,
+      "lng": -2.12811
+    },
+    "ondarreta": {
+      "lat": 43.31675,
+      "lng": -2.00268
+    },
+    "hondarribia": {
+      "lat": 43.37964,
+      "lng": -1.79624
+    },
+    "custom-mpxrnyqk": {
+      "lat": 43.37291,
+      "lng": -2.54572
+    },
+    "custom-mpxrqqes": {
+      "lat": 43.36355,
+      "lng": -2.49415
     }
   },
   "spotEdits": {
@@ -1236,6 +1352,91 @@ window.SURFMACH_BAKED = {
       "notes": "Spot muy escénico, funciona mejor con mareas medias y vientos suaves del sur.",
       "lat": 43.75044,
       "lng": -7.72385
+    },
+    "custom-mpsrsykc": {
+      "name": "Cueva",
+      "area": "ast-oeste",
+      "icon": "occasional",
+      "wave": "Mixto izquierdas y derechas de beachbreak",
+      "bottom": "Arena",
+      "swell": "—",
+      "wind": "S / SE offshore",
+      "tide": "Media",
+      "level": "Principiante / intermedio",
+      "crowd": "Bajo",
+      "season": "Oct – Mar",
+      "hazards": "Corriente bastante fuerte en marea baja",
+      "notes": "",
+      "lat": 43.55096,
+      "lng": -6.47364
+    },
+    "frejulfe": {
+      "name": "Freijulfe",
+      "area": "ast-oeste",
+      "icon": "occasional",
+      "wave": "Beach break en desembocadura",
+      "bottom": "Arena y canto",
+      "swell": "NW · 1–2,5 m · 9–14 s",
+      "wind": "S / SW offshore",
+      "tide": "Media-baja",
+      "level": "Intermedio",
+      "crowd": "Bajo",
+      "season": "Otoño – invierno",
+      "hazards": "Corriente del río, entorno protegido sin servicios",
+      "notes": "Playa virgen entre Navia y Puerto de Vega, protegida como monumento natural. Desembocadura que crea bancos de arena cambiantes; soledad casi garantizada.",
+      "lat": 43.5593,
+      "lng": -6.6762
+    },
+    "navia": {
+      "name": "Navia",
+      "area": "ast-oeste",
+      "icon": "occasional",
+      "wave": "Beach break",
+      "bottom": "Arena",
+      "swell": "NW · 1–2,5 m",
+      "wind": "S / SE",
+      "tide": "Media",
+      "level": "Principiante / intermedio",
+      "crowd": "Medio",
+      "season": "Otoño – primavera",
+      "hazards": "Corriente en desembocadura del Navia",
+      "notes": "Playa abierta junto a la villa de Navia. Picos móviles de arena, accesible y con servicios; buena opción para días de tamaño moderado.",
+      "lat": 43.5549,
+      "lng": -6.7231
+    },
+    "tapia": {
+      "name": "Tapia de Casariego",
+      "area": "ast-oeste",
+      "icon": "consistent",
+      "wave": "Beach + reef, varios picos",
+      "bottom": "Arena y roca",
+      "swell": "NW / N · 1–3 m · 10–15 s",
+      "wind": "S / SW offshore",
+      "tide": "Media",
+      "level": "Todos los niveles",
+      "crowd": "Alto en campeonatos",
+      "season": "Todo el año",
+      "hazards": "Rocas en los extremos, corrientes con tamaño",
+      "notes": "Cuna del surf asturiano y sede de un clásico campeonato internacional de longboard. Varios picos de calidad muy consistentes; ambiente surfero todo el año.",
+      "lat": 43.5678,
+      "lng": -6.949
+    },
+    "penarronda": {
+      "name": "Peñarronda",
+      "area": "ast-oeste",
+      "icon": "consistent",
+      "wave": "Beach break largo",
+      "bottom": "Arena",
+      "swell": "NW / N · 1–3 m",
+      "wind": "S / SW offshore",
+      "tide": "Media",
+      "level": "Principiante a avanzado",
+      "crowd": "Medio",
+      "season": "Todo el año",
+      "hazards": "Corrientes con tamaño, roca de Peñarronda en el centro",
+      "notes": "Playa entre Asturias y Galicia presidida por el peñón de Peñarronda. Arenal amplio con picos móviles, muy popular y de buena calidad con marejada NW.",
+      "lat": 43.5533,
+      "lng": -6.997
     }
   },
   "windguru": {
@@ -1256,6 +1457,12 @@ window.SURFMACH_BAKED = {
     "barayo": "48712",
     "fronton": "",
     "confital": "",
-    "praia-bares": ""
+    "praia-bares": "",
+    "custom-mpsrsykc": "100034",
+    "otur": "100034",
+    "frejulfe": "107190",
+    "navia": "48712",
+    "tapia": "222022",
+    "penarronda": "48713"
   }
 };

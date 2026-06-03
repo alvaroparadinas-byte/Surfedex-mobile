@@ -47,22 +47,39 @@ function bandFor(score) {
   return "Épico";
 }
 
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
+// Puntuación EXIGENTE. La "ola en sí" (dirección + tamaño del swell) es la base,
+// y el PERIODO y el VIENTO actúan como filtros multiplicadores: si fallan,
+// recortan la nota con fuerza. El viento solo puntúa si es Glass (muy flojo) u
+// offshore limpio; un viento onshore/cruzado —aunque sea suave— hunde la nota.
 function spotScore(spot, fc) {
   const rules = spot || {};
+
+  // --- base: la ola en sí (dirección + tamaño del swell), 0..1 ---
   const sw = dirMatch(fc.swellDirection, rules.bestSwellDirection || []);          // 0..1
   const [lo, hi] = (rules.score && rules.score.swellIdeal) || [1, 3];
   const h = fc.swellHeight != null ? fc.swellHeight : fc.waveHeight;
-  let size = h < lo ? Math.max(0, h / lo)
-           : h > hi ? Math.max(0, 1 - (h - hi) / hi)
-           : 1;                                                                     // 0..1
-  const periodIdeal = (rules.score && rules.score.periodIdeal) || 12;
-  const per = Math.max(0, Math.min(1, (fc.swellPeriod - 7) / (periodIdeal - 7)));   // 0..1
-  const wd = dirMatch(fc.windDirection, rules.bestWindDirection || []);            // 0..1 (offshore)
-  const wkn = fc.windSpeed * MS_TO_KN;
-  const calm = Math.max(0, Math.min(1, 1 - (wkn - 6) / 22));                        // ideal <6kn, malo >28kn
-  const windScore = 0.55 * wd + 0.45 * calm;
+  const size = h == null ? 0
+             : h < lo ? Math.max(0, h / lo)
+             : h > hi ? Math.max(0, 1 - (h - hi) / hi)
+             : 1;                                                                   // 0..1
+  const waveBase = 0.55 * sw + 0.45 * size;                                         // 0..1
 
-  const score = 100 * (0.30 * sw + 0.22 * size + 0.18 * per + 0.30 * windScore);
+  // --- periodo: filtro de calidad (windswell corto castiga fuerte) ---
+  const periodIdeal = (rules.score && rules.score.periodIdeal) || 12;
+  const periodFactor = clamp01((fc.swellPeriod - 6) / (periodIdeal - 6));           // 0 a 6 s → 1 al ideal
+  const periodMult = 0.4 + 0.6 * periodFactor;                                      // recorta hasta un 60%
+
+  // --- viento: bueno SOLO si es Glass (≤3 kn) u offshore limpio ---
+  const wd = dirMatch(fc.windDirection, rules.bestWindDirection || []);            // 0..1 offshore
+  const kn = (fc.windSpeed || 0) * MS_TO_KN;
+  const glass = clamp01(1 - (kn - 3) / 5);                                          // ≤3 kn = 1 ; ≥8 kn = 0
+  const offshoreClean = wd * clamp01(1 - (kn - 8) / 16);                            // offshore ideal ~8 kn, soplado >24 kn
+  const windScore = Math.max(glass, offshoreClean);                                 // 0..1
+  const windMult = 0.4 + 0.6 * windScore;                                           // recorta hasta un 60%
+
+  const score = 100 * waveBase * periodMult * windMult;
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
