@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260603b" />
   <template id="__bundler_thumbnail">
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <rect width="100" height="100" fill="#0a1119"/>
@@ -163,10 +163,10 @@
   <script src="data/spots.js"></script>
   <script src="data/photos.js"></script>
   <script src="data/baked.js"></script>
-  <!-- ► DATOS REALES: descomenta y apunta a tu backend Surfedex (ver backend/README.md).
-       Sin esta línea, el parte usa datos de ejemplo. -->
-  <!-- <script>window.SURFEDEX_FORECAST_API = "https://tu-backend.ejemplo.com";</script> -->
-  <script src="forecast.js"></script>
-  <script src="app.js"></script>
+  <!-- ► DATOS REALES: backend Surfedex en producción (Render). El parte de los
+       spots piloto (Salinas) se sirve desde aquí; si falla, cae a datos de ejemplo. -->
+  <script>window.SURFEDEX_FORECAST_API = "https://surfedex-mobile.onrender.com";</script>
+  <script src="forecast.js?v=20260603b"></script>
+  <script src="app.js?v=20260603b"></script>
 </body>
 </html>

@@ -23,7 +23,23 @@
   const API_BASE = (window.SURFEDEX_FORECAST_API || "").replace(/\/$/, "");
 
   // Spots piloto que usan el forecast propio (en vez de Windguru).
-  const PILOT_SPOTS = ["salinas"];
+  // Asturias completa: West + East. Sus IDs deben existir también en el backend
+  // (backend/src/spots.js) para que devuelva datos reales.
+  const PILOT_SPOTS = [
+    // Asturias West
+    "salinas", "verdicio", "xago", "san-juan-nieva", "bayas", "quebrantos",
+    "aguilar", "cadavedo", "otur", "barayo", "frejulfe", "navia", "tapia",
+    "penarronda", "custom-mpsrsykc", "custom-mpsrz0k3", "custom-mpss0cx1",
+    // Asturias East
+    "san-lorenzo", "la-nora", "custom-mpsuiolb", "custom-mpsud51b", "custom-mpsu7cla",
+    // Gran Canaria
+    "vagabundo", "el-circo", "bunker", "derecha-roque", "boquines", "molokai",
+    "enanos", "quintanilla", "puertillo", "cicer", "muellitos", "lloret", "confital",
+    "san-cristobal", "la-laja", "playa-la-laja", "terrazas", "playa-hombre", "burrero",
+    "ojos-garza", "vargas", "arinaga", "pozo", "pozo-izquierdo", "juangrande",
+    "arguineguin", "patalavaca", "pasito", "maspalomas", "playa-ingles",
+    "fronton", "agujero", "bocabarranco", "agaete", "aldea"
+  ];
 
   // ---------- helpers de formato/unidades ----------
   const MS_TO_KN = 1.94384;
@@ -36,19 +52,28 @@
   const i0 = (v) => (v == null || isNaN(v) ? "—" : Math.round(v).toString());
   const kn = (ms) => (ms == null || isNaN(ms) ? "—" : Math.round(ms * MS_TO_KN).toString());
 
+  // Color por altura de ola: >2 m amarillo (cuidado), >3 m rojo (mar grande).
+  function heightClass(h) {
+    if (h == null || isNaN(h)) return "";
+    if (h > 3) return "h-big";
+    if (h > 2) return "h-mid";
+    return "";
+  }
+
   // Flecha que apunta a DÓNDE va el flujo (downwind/down-swell = dir + 180º).
   function arrow(deg, cls) {
     const r = ((deg || 0) + 180) % 360;
     return `<span class="sfc-arr ${cls||""}" style="transform:rotate(${r}deg)">↑</span>`;
   }
 
-  // Bandas de calidad (mismas que spotScore del backend).
+  // Bandas de calidad — EXIGENTES: subimos los umbrales para que "Bueno", "Muy
+  // bueno" y "Épico" se ganen de verdad y no se repartan a la ligera.
   function band(score) {
     if (score == null || isNaN(score)) return { label: "—", cls: "b0" };
-    if (score <= 20) return { label: "Malo", cls: "b1" };
-    if (score <= 40) return { label: "Surfable", cls: "b2" };
-    if (score <= 60) return { label: "Bueno", cls: "b3" };
-    if (score <= 80) return { label: "Muy bueno", cls: "b4" };
+    if (score < 35) return { label: "Malo", cls: "b1" };
+    if (score < 55) return { label: "Surfable", cls: "b2" };
+    if (score < 72) return { label: "Bueno", cls: "b3" };
+    if (score < 88) return { label: "Muy bueno", cls: "b4" };
     return { label: "Épico", cls: "b5" };
   }
 
@@ -62,19 +87,16 @@
     return String(d.getHours()).padStart(2, "0") + ":00";
   }
 
-  // ---------- petición al backend, con fallback a datos de ejemplo ----------
+  // ---------- petición al backend (datos REALES; sin datos de ejemplo) ----------
+  // Si el backend no responde o no tiene este spot, NO inventamos nada: se lanza
+  // un error y la UI muestra "Previsión no disponible".
   async function fetchForecast(spot) {
-    if (API_BASE) {
-      try {
-        const r = await fetch(`${API_BASE}/api/spots/${spot.id}/forecast`, { headers: { Accept: "application/json" } });
-        if (r.ok) {
-          const data = await r.json();
-          data._sample = false;
-          return data;
-        }
-      } catch (e) { /* cae al ejemplo */ }
-    }
-    return buildSample(spot);
+    if (!API_BASE) throw new Error("backend no configurado");
+    const r = await fetch(`${API_BASE}/api/spots/${spot.id}/forecast`, { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error("backend " + r.status);
+    const data = await r.json();
+    data._sample = false;
+    return data;
   }
 
   // ---------- generador de datos de ejemplo (realista para Salinas, NW) ----------
@@ -200,17 +222,28 @@
     return 0;
   }
   function spotScore(rules, fc) {
+    // Misma lógica EXIGENTE que el backend: la ola en sí es la base; periodo y
+    // viento son filtros multiplicadores. El viento solo puntúa si es Glass
+    // (muy flojo) u offshore limpio.
+    const c01 = (v) => Math.max(0, Math.min(1, v));
     const sw = dirMatch(fc.swellDirection, rules.bestSwellDirection || []);   // 0..1
     const [lo, hi] = rules.swellIdeal || [1, 3];
     const h = fc.swellHeight;
-    let size = h < lo ? Math.max(0, h / lo) : h > hi ? Math.max(0, 1 - (h - hi) / hi) : 1; // 0..1
-    const per = Math.max(0, Math.min(1, (fc.swellPeriod - 7) / ((rules.periodIdeal || 12) - 7))); // 0..1
+    const size = h == null ? 0
+               : h < lo ? Math.max(0, h / lo)
+               : h > hi ? Math.max(0, 1 - (h - hi) / hi)
+               : 1;                                                            // 0..1
+    const waveBase = 0.6 * sw + 0.4 * size;
+    const periodIdeal = rules.periodIdeal || 12;
+    const periodFactor = c01((fc.swellPeriod - 6) / (periodIdeal - 6));        // 0 a 6 s → 1 al ideal
+    const periodMult = 0.35 + 0.65 * periodFactor;
     const wd = dirMatch(fc.windDirection, rules.bestWindDirection || []);     // 0..1 (offshore)
-    const wkn = fc.windSpeed * MS_TO_KN;
-    const calm = Math.max(0, Math.min(1, 1 - (wkn - 6) / 22)); // 0kn..ideal, >28kn malo
-    const windScore = 0.55 * wd + 0.45 * calm;
-    // ponderación
-    const score = 100 * (0.30 * sw + 0.22 * size + 0.18 * per + 0.30 * windScore);
+    const kn = (fc.windSpeed || 0) * MS_TO_KN;
+    const glass = c01(1 - (kn - 3) / 5);                                       // ≤3 kn = 1 ; ≥8 kn = 0
+    const offshoreClean = wd * c01(1 - (kn - 8) / 16);                         // offshore ideal ~8 kn
+    const windScore = Math.max(glass, offshoreClean);
+    const windMult = 0.3 + 0.7 * windScore;
+    const score = 100 * waveBase * periodMult * windMult;
     return Math.max(0, Math.min(100, Math.round(score)));
   }
 
@@ -223,9 +256,10 @@
   const DOW_LETTER = ["D", "L", "M", "X", "J", "V", "S"];   // dom..sáb
 
   // Barra vertical (gráfico de barras) escalada a la altura del swell.
-  function swellBar(ph) {
+  function swellBar(ph, h) {
     ph = Math.max(3, Math.round(ph));
-    return `<span class="sfc-sw-bar" style="height:${ph}px"></span>`;
+    const cls = heightClass(h);
+    return `<span class="sfc-sw-bar ${cls}" style="height:${ph}px"></span>`;
   }
 
   // ---------- render ----------
@@ -233,8 +267,7 @@
   // la letra del día (L M X J V S D) y la altura máx debajo. La "foto" rápida.
   function renderSwell(d) {
     const PLOT = 80;
-    const maxH = Math.max(...d.next7days.map((x) => x.waveMax), 1);
-    const rulerMax = Math.max(2, Math.ceil(maxH * 1.18));   // ~18 % de aire por arriba
+    const rulerMax = 4;                                     // escala fija 0–4 m
     const step = PLOT / rulerMax;
     const grid =
       `repeating-linear-gradient(to top, var(--line) 0, var(--line) 1px, transparent 1px, transparent ${step}px)`;
@@ -246,10 +279,10 @@
     const cols = d.next7days.map((e) => {
       const dt = new Date(e.date);
       const isToday = dt.toDateString() === today;
-      const ph = (e.waveMax / rulerMax) * PLOT;
+      const ph = Math.min(PLOT, (e.waveMax / rulerMax) * PLOT);   // se queda en el tope a 4 m+
       return `<div class="sfc-sw-col ${isToday ? "is-today" : ""}">
-        <div class="sfc-sw-plot" style="background-image:${grid}">${swellBar(ph)}</div>
-        <span class="sfc-sw-h">${m1(e.waveMax)}</span>
+        <div class="sfc-sw-plot" style="background-image:${grid}">${swellBar(ph, e.waveMax)}</div>
+        <span class="sfc-sw-h ${heightClass(e.waveMax)}">${m1(e.waveMax)}</span>
         <span class="sfc-sw-d">${DOW_LETTER[dt.getDay()]}</span>
       </div>`;
     }).join("");
@@ -262,16 +295,18 @@
     </div>`;
   }
 
-  function chip(label, value, unit, sub) {
+  function chip(label, value, unit, sub, cls) {
     return `<div class="sfc-chip">
       <span class="sfc-clabel">${label}</span>
-      <span class="sfc-cval">${value}<i>${unit || ""}</i>${sub || ""}</span>
+      <span class="sfc-cval ${cls || ""}">${value}<i>${unit || ""}</i>${sub || ""}</span>
     </div>`;
   }
 
-  // Estrellas 0–5 a partir de la puntuación 0–100 (con relleno fraccionado).
+  // Estrellas 0–5 con curva EXIGENTE: 5/5 prácticamente solo si todo se alinea.
+  // r = 5 · (score/100)^1.5 → un 80/100 ≈ 3.6★, un 90 ≈ 4.3★, solo ~98+ llega a 5★.
   function stars(score) {
-    const r = Math.max(0, Math.min(5, (score || 0) / 20));
+    const norm = Math.max(0, Math.min(1, (score || 0) / 100));
+    const r = 5 * Math.pow(norm, 1.5);
     const pct = (r / 5 * 100).toFixed(1);
     return `<span class="sfc-stars" title="${r.toFixed(1)} / 5" aria-label="${r.toFixed(1)} de 5">
       <span class="sfc-stars-bg">★★★★★</span>
@@ -290,7 +325,7 @@
           <span class="sfc-now-rating">${stars(c.score)}<em>${b.label}</em></span>
         </div>
         <div class="sfc-strip">
-          ${chip("Ola", m1(c.waveHeight), "m", "")}
+          ${chip("Ola", m1(c.waveHeight), "m", "", heightClass(c.waveHeight))}
           ${chip("Periodo", i0(c.wavePeriod), "s", "")}
           ${chip("Swell", m1(c.swellHeight), "m", arrow(c.swellDirection))}
           ${chip("Viento", kn(c.windSpeed), "kn", arrow(c.windDirection, "wind"))}
@@ -318,20 +353,26 @@
     </div>`;
   }
 
-  // 7 días: filas SOLO números; cada día se despliega a su detalle por horas.
+  // 7 días: tira horizontal de tarjetas (una por día), con el resumen apilado
+  // debajo del nombre. Al tocar una tarjeta se despliega su detalle por horas.
   function renderDaily(d) {
-    const rows = d.next7days.map((e) => {
+    const cards = d.next7days.map((e) => {
       const b = band(e.score);
       const f = fmtDay(e.date);
       return `<details class="sfc-day">
         <summary class="sfc-dr">
-          <span class="sfc-dday"><b>${f.dow}</b>${f.dm}</span>
-          <span class="sfc-dwave">${m1(e.waveMin)}–${m1(e.waveMax)}<i>m</i></span>
-          <span class="sfc-dper">${i0(e.periodDom)}<i>s</i></span>
-          <span class="sfc-dwind">${arrow(e.windDirection,"wind")}${kn(e.windAvg)}<i>kn</i></span>
-          <span class="sfc-ddir">${arrow(e.swellDirection)}${compass(e.swellDirection)}</span>
-          <span class="sfc-dstars">${stars(e.score)}</span>
-          <span class="sfc-dchev">▾</span>
+          <div class="sfc-dhead">
+            <span class="sfc-dday"><b>${f.dow}</b><i>${f.dm}</i></span>
+            <span class="sfc-dstars">${stars(e.score)}</span>
+          </div>
+          <span class="sfc-dband ${b.cls}">${b.label}</span>
+          <div class="sfc-dstats">
+            <span class="sfc-dstat"><em>Ola</em><b class="${heightClass(e.waveMax)}">${m1(e.waveMin)}–${m1(e.waveMax)}</b><i>m</i></span>
+            <span class="sfc-dstat"><em>Periodo</em><b>${i0(e.periodDom)}</b><i>s</i></span>
+            <span class="sfc-dstat"><em>Swell</em><b>${arrow(e.swellDirection)} ${compass(e.swellDirection)}</b></span>
+            <span class="sfc-dstat"><em>Viento</em><b>${arrow(e.windDirection,"wind")} ${kn(e.windAvg)}</b><i>kn</i></span>
+          </div>
+          <span class="sfc-dchev">horas<span class="sfc-dchev-ic">▾</span></span>
         </summary>
         ${renderDayHours(e)}
       </details>`;
@@ -339,9 +380,9 @@
     return `<details class="sfc-block sfc-foldable" open>
       <summary class="sfc-bh">
         <span>Próximos 7 días · detalle</span>
-        <span class="sfc-bh-peek">toca un día para ver sus horas<span class="sfc-chev">▾</span></span>
+        <span class="sfc-bh-peek">desliza ▸ · toca un día para sus horas<span class="sfc-chev">▾</span></span>
       </summary>
-      <div class="sfc-daily">${rows}</div>
+      <div class="sfc-daily">${cards}</div>
     </details>`;
   }
 
@@ -366,7 +407,10 @@
       const data = await fetchForecast(spot);
       renderAll(el, data);
     } catch (e) {
-      el.innerHTML = `<div class="sfc-error">No se pudo cargar la previsión.</div>`;
+      el.innerHTML = `<div class="sfc-unavailable">
+        <span class="t">Previsión no disponible</span>
+        <span class="d">Este spot todavía no tiene datos del servidor.</span>
+      </div>`;
     }
   }
 

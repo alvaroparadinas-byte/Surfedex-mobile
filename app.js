@@ -210,6 +210,76 @@
       url: "https://in2thebeach.es/callbacks/camviewer_ext2.php?id=3",
       link: "https://in2thebeach.es/webcam/3/playa-del-ingles-izquierda/",
       label: "Playa del Inglés · Izquierda"
+    },
+
+    // ===== ASTURIAS ORIENTE (Webcams de Asturias) =====
+    // El reproductor de webcamsdeasturias.com bloquea la incrustación en iframe,
+    // así que estas cámaras se enlazan a su página oficial (type "link": abre la
+    // emisión en directo en una pestaña nueva). Para verlas EMBEBIDAS dentro de la
+    // ficha, sustituye type:"link"+link por type:"iframe"+url con la URL del
+    // reproductor (p. ej. https://rtsp.me/embed/XXXXXXXX/), igual que las cámaras
+    // del occidente; el campo "link" se conserva como respaldo.
+    "san-lorenzo": {
+      type: "iframe",
+      url: "https://rtsp.me/embed/akBSN4td/",
+      link: "https://www.webcamsdeasturias.com/asturias/centro/gijon/gijon/la-escalerona-playa-de-san-lorenzo-hd/148/",
+      label: "San Lorenzo · La Escalerona (Gijón)"
+    },
+    "custom-mpswn3ha": {
+      type: "iframe",
+      url: "https://rtsp.me/embed/9taDa6b8/",
+      link: "https://www.webcamsdeasturias.com/asturias/comarca-de-la-sidra/villaviciosa/quintes/playa-espana-hd/164/",
+      label: "Playa de España · Quintes"
+    },
+    "la-nora": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/comarca-de-la-sidra/villaviciosa/villaviciosa/playa-de-la-nora/121/",
+      label: "La Ñora · Villaviciosa"
+    },
+    "custom-mpsuiolb": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/comarca-de-la-sidra/villaviciosa/rodiles/playa-de-rodiles-hd/120/",
+      label: "Rodiles · Villaviciosa"
+    },
+    "custom-mpsxedcm": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/comarca-del-sueve/caravia/caravia/playa-de-la-espasa-hd/71/",
+      label: "La Espasa · Caravia"
+    },
+    "custom-mpsxgbby": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/comarca-del-sueve/caravia/caravia/playa-arenal-de-moris-hd/188/",
+      label: "Arenal de Morís · Caravia"
+    },
+    "custom-mpsud51b": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/oriente/ribadesella/vega/playa-de-vega-hd/132/",
+      label: "Playa de Vega · Ribadesella"
+    },
+    "custom-mpsxiv0u": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/oriente/ribadesella/ribadesella/playa-de-santa-marina-hd/166/",
+      label: "Santa Marina · Ribadesella"
+    },
+    "custom-mpsxmluu": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/oriente/llanes/bedon/playa-de-san-antolin-hd/131/",
+      label: "San Antolín · Llanes"
+    },
+    "custom-mpsxulha": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/oriente-de-asturias/llanes/barro/playa-de-barro-hd/16/",
+      label: "Playa de Barro · Llanes"
+    },
+    "custom-mpsu7cla": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/oriente/llanes/andrin/playa-de-andrin-hd/187/",
+      label: "Andrín · Llanes"
+    },
+    "custom-mpsy4a66": {
+      type: "link",
+      link: "https://www.webcamsdeasturias.com/asturias/oriente-de-asturias/ribadedeva/ribadedeva/playa-de-la-franca-hd/117/",
+      label: "La Franca · Ribadedeva"
     }
   };
   function webcamFor(s) {
@@ -1335,7 +1405,21 @@
       if (cam) {
         // YouTube se incrusta de forma fiable; otros proveedores (type "iframe")
         // pueden bloquear la incrustación, así que dejamos el enlace siempre visible.
+        // type "link": la cámara no se puede incrustar → botón que abre la emisión
+        // oficial en una pestaña nueva (sin visor embebido).
         const isYt = cam.type === "youtube";
+        const isLink = cam.type === "link";
+        if (isLink) {
+          html += `
+        <div class="webcam-card" id="webcam-card">
+          <div class="head">
+            <span class="lbl">Webcam en directo</span>
+            <span class="cam-live"><span class="cd"></span>EN VIVO</span>
+          </div>
+          <a class="webcam-load-btn" id="cam-link" href="${webcamWatchUrl(cam)}" target="_blank" rel="noopener">▶ Ver cámara en directo ↗</a>
+          <span class="cam-cta-note" id="cam-cta-note">${cam.label} · se abre en una pestaña nueva</span>
+        </div>`;
+        } else {
         html += `
         <div class="webcam-card" id="webcam-card">
           <div class="head">
@@ -1348,22 +1432,20 @@
           <div class="webcam-frame" id="cam-frame" hidden></div>
           <a class="cam-fallback" id="cam-fallback" href="${webcamWatchUrl(cam)}" target="_blank" rel="noopener"${isYt ? " hidden" : ""}>${isYt ? "¿No se ve la cámara? Ábrela en YouTube ↗" : "Abrir la cámara en la web del proveedor ↗"}</a>
         </div>`;
+        }
       }
 
       // pronóstico (olas + viento + mareas): desplegable bajo la webcam.
       // Piloto (Surfedex) en spots seleccionados; resto Windguru. Las mareas
       // (Open-Meteo) van OCULTAS dentro del propio desplegable.
       const useSFC = window.SurfedexForecast && window.SurfedexForecast.usesPilot(s.id);
-      const wgId = useSFC ? null : wgIdFor(s);
+      const wgId = wgIdFor(s);
+      const dualSrc = !!(useSFC && wgId);   // Surfedex + Windguru → conmutador de fuente
       const hasForecast = !!(useSFC || wgId);
       const fcCta = useSFC ? "Previsi\u00f3n Surfedex + mareas \u00b7 se carga al pulsar"
                   : wgId ? "Olas y viento (Windguru) + mareas \u00b7 se carga al pulsar"
                   : "Nivel del mar / mareas (Open-Meteo) \u00b7 se carga al pulsar";
-      let fcInner;
-      if (useSFC) {
-        fcInner = `<div class="sfc" id="sfc-mount"><div class="sfc-loading">Cargando previsi\u00f3n\u2026</div></div>`;
-      } else if (wgId) {
-        fcInner = `
+      const wgPaneHTML = `
             <div class="wg-tbl">
               <div class="wg-sub">Olas · periodo · direcci\u00f3n <em>· Windguru</em></div>
               <div class="wg-anchor" id="wg-olas"></div>
@@ -1372,6 +1454,16 @@
               <div class="wg-sub">Viento · temperatura <em>· Windguru</em></div>
               <div class="wg-anchor" id="wg-viento"></div>
             </div>`;
+      const sfcPaneHTML = `<div class="sfc" id="sfc-mount"><div class="sfc-loading">Cargando previsi\u00f3n\u2026</div></div>`;
+      let fcInner;
+      if (useSFC && wgId) {
+        // dos paneles superpuestos; el conmutador del encabezado decide cuál se ve
+        fcInner = `<div class="fc-pane" data-pane="sfc">${sfcPaneHTML}</div>
+                   <div class="fc-pane" data-pane="wg" hidden>${wgPaneHTML}</div>`;
+      } else if (useSFC) {
+        fcInner = sfcPaneHTML;
+      } else if (wgId) {
+        fcInner = wgPaneHTML;
       } else {
         fcInner = `
             <div class="wg-na">
@@ -1379,8 +1471,14 @@
               <span class="d">Este spot no tiene punto de Windguru vinculado. Usa ✎ Editar para a\u00f1adirlo.</span>
             </div>`;
       }
+      const srcToggle = dualSrc
+        ? `<div class="fc-src" id="fc-src" role="tablist">
+             <button type="button" class="fc-src-btn active" data-src="sfc" role="tab">Surfedex</button>
+             <button type="button" class="fc-src-btn" data-src="wg" role="tab">Windguru</button>
+           </div>`
+        : (useSFC ? '<span class="sfc-tag">Surfedex</span>' : "");
       html += `<div class="forecast wg-card${hasForecast ? "" : " wg-empty"}">
-          <div class="head"><span class="lbl">Pron\u00f3stico</span>${useSFC ? '<span class="sfc-tag">Surfedex</span>' : ""}</div>
+          <div class="head"><span class="lbl">Pron\u00f3stico</span>${srcToggle}</div>
           <button class="wg-load-btn" id="fc-load">▶ ${hasForecast ? "Ver previsi\u00f3n de olas, viento y mareas" : "Ver mareas y nivel del mar"}</button>
           <span class="wg-cta-note" id="fc-note">${fcCta}</span>
           <div class="fc-body" id="fc-body" hidden>
@@ -1427,34 +1525,89 @@
         const fcLoad = document.getElementById("fc-load");
         const fcBody = document.getElementById("fc-body");
         const fcNote = document.getElementById("fc-note");
+        const fcSrc  = document.getElementById("fc-src");
         const fcTpl  = fcBody.innerHTML;   // estado limpio para poder recargar
         const lblClosed = "▶ " + (hasForecast ? "Ver previsi\u00f3n de olas, viento y mareas" : "Ver mareas y nivel del mar");
         const lblOpen   = "Cerrar " + (hasForecast ? "previsi\u00f3n" : "mareas");
         let fcOpen = false;
-        fcLoad.addEventListener("click", () => {
-          fcOpen = !fcOpen;
-          clearWindguru();                  // parte limpio (1 widget de Windguru máx.)
-          if (fcOpen) {
+        let curSrc = "sfc";        // fuente activa cuando hay conmutador (por defecto: Surfedex)
+        let sfcMounted = false;
+
+        function setSrcActive(src) {
+          if (!fcSrc) return;
+          fcSrc.querySelectorAll(".fc-src-btn").forEach((b) =>
+            b.classList.toggle("active", b.dataset.src === src));
+        }
+
+        function mountWg() {
+          mountWindguru(wgId, 25, "HTSGW,PERPW,DIRPW", fcBody.querySelector("#wg-olas"));
+          mountWindguru(wgId, 3, "WINDSPD,GUST,SMER,TMPE", fcBody.querySelector("#wg-viento"));
+        }
+
+        // Conmuta entre paneles (solo caso dual Surfedex + Windguru).
+        function showSource(src) {
+          curSrc = src;
+          setSrcActive(src);
+          const sfcPane = fcBody.querySelector('[data-pane="sfc"]');
+          const wgPane  = fcBody.querySelector('[data-pane="wg"]');
+          if (sfcPane) sfcPane.hidden = src !== "sfc";
+          if (wgPane)  wgPane.hidden  = src !== "wg";
+          clearWindguru();                  // 1 widget de Windguru máx.
+          if (src === "sfc") {
+            if (!sfcMounted) {
+              window.SurfedexForecast.mount(s, fcBody.querySelector("#sfc-mount"));
+              sfcMounted = true;
+            }
+          } else {
+            mountWg();
+          }
+        }
+
+        function setOpen(open) {
+          fcOpen = open;
+          if (open) {
             fcBody.hidden = false;
             fcLoad.textContent = lblOpen;
             fcLoad.classList.add("is-open");
             if (fcNote) fcNote.hidden = true;
-            if (useSFC) {
+            if (dualSrc) {
+              showSource(curSrc);
+            } else if (useSFC) {
+              clearWindguru();
               window.SurfedexForecast.mount(s, fcBody.querySelector("#sfc-mount"));
             } else if (wgId) {
-              mountWindguru(wgId, 25, "HTSGW,PERPW,DIRPW", fcBody.querySelector("#wg-olas"));
-              mountWindguru(wgId, 3, "WINDSPD,GUST,SMER,TMPE", fcBody.querySelector("#wg-viento"));
+              clearWindguru();
+              mountWg();
+            } else {
+              clearWindguru();
             }
             // mareas (Open-Meteo) — siempre, ocultas dentro del desplegable
             mountTide(s, fcBody.querySelector("#tide-mount"));
           } else {
             fcBody.hidden = true;
+            clearWindguru();
             fcBody.innerHTML = fcTpl;        // restaura anclajes/mounts limpios
+            sfcMounted = false;
+            curSrc = "sfc";
+            setSrcActive("sfc");
             fcLoad.textContent = lblClosed;
             fcLoad.classList.remove("is-open");
             if (fcNote) fcNote.hidden = false;
           }
-        });
+        }
+
+        fcLoad.addEventListener("click", () => setOpen(!fcOpen));
+
+        // Conmutador de fuente: abre el desplegable si está cerrado; si no, cambia de panel.
+        if (fcSrc) {
+          fcSrc.querySelectorAll(".fc-src-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const src = btn.dataset.src;
+              if (!fcOpen) { curSrc = src; setOpen(true); }
+              else if (src !== curSrc) { showSource(src); }
+            });
+          });
+        }
       }
 
       document.getElementById("fav-btn").addEventListener("click", () => {
@@ -1494,8 +1647,9 @@
       }
 
       // webcam en directo: el iframe solo se inyecta al pulsar (carga perezosa).
+      // Las cámaras type "link" no tienen visor embebido (su botón es un enlace).
       const camCfg = webcamFor(s);
-      if (camCfg) {
+      if (camCfg && camCfg.type !== "link") {
         const camBtn = document.getElementById("cam-load");
         const camFrame = document.getElementById("cam-frame");
         const camNote = document.getElementById("cam-cta-note");
