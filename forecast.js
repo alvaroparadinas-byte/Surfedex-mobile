@@ -32,6 +32,10 @@
     "penarronda", "custom-mpsrsykc", "custom-mpsrz0k3", "custom-mpss0cx1",
     // Asturias East
     "san-lorenzo", "la-nora", "custom-mpsuiolb", "custom-mpsud51b", "custom-mpsu7cla",
+    // Asturias East · spots propios
+    "custom-mpswn3ha", "custom-mpswt1ni", "custom-mpsxedcm", "custom-mpsxgbby",
+    "custom-mpsxiv0u", "custom-mpsxmluu", "custom-mpsxq9cm", "custom-mpsxulha",
+    "custom-mpsxxjw6", "custom-mpsy1puu", "custom-mpsy4a66",
     // Gran Canaria
     "vagabundo", "el-circo", "bunker", "derecha-roque", "boquines", "molokai",
     "enanos", "quintanilla", "puertillo", "cicer", "muellitos", "lloret", "confital",
@@ -50,6 +54,8 @@
   }
   const m1 = (v) => (v == null || isNaN(v) ? "—" : v.toFixed(1));
   const i0 = (v) => (v == null || isNaN(v) ? "—" : Math.round(v).toString());
+  // Periodo SIEMPRE +1 s respecto a Stormglass (es conservador). Solo display.
+  const i0p = (v) => (v == null || isNaN(v) ? "—" : Math.round(v + 1).toString());
   const kn = (ms) => (ms == null || isNaN(ms) ? "—" : Math.round(ms * MS_TO_KN).toString());
 
   // Color por altura de ola: >2 m amarillo (cuidado), >3 m rojo (mar grande).
@@ -66,15 +72,23 @@
     return `<span class="sfc-arr ${cls||""}" style="transform:rotate(${r}deg)">↑</span>`;
   }
 
-  // Bandas de calidad — EXIGENTES: subimos los umbrales para que "Bueno", "Muy
-  // bueno" y "Épico" se ganen de verdad y no se repartan a la ligera.
+  // Bandas de calidad — escala del modelo (0..100): 1-5★ + adjetivo.
   function band(score) {
     if (score == null || isNaN(score)) return { label: "—", cls: "b0" };
-    if (score < 35) return { label: "Malo", cls: "b1" };
-    if (score < 55) return { label: "Surfable", cls: "b2" };
-    if (score < 72) return { label: "Bueno", cls: "b3" };
-    if (score < 88) return { label: "Muy bueno", cls: "b4" };
+    if (score <= 20) return { label: "Malo", cls: "b1" };
+    if (score <= 45) return { label: "Surfable", cls: "b2" };
+    if (score <= 70) return { label: "Bueno", cls: "b3" };
+    if (score <= 90) return { label: "Muy bueno", cls: "b4" };
     return { label: "Épico", cls: "b5" };
+  }
+  // Estrellas (1–5) discretas, alineadas con la banda del adjetivo.
+  function starCount(score) {
+    if (score == null || isNaN(score)) return 0;
+    if (score <= 20) return 1;
+    if (score <= 45) return 2;
+    if (score <= 70) return 3;
+    if (score <= 90) return 4;
+    return 5;
   }
 
   function fmtDay(iso) {
@@ -302,13 +316,11 @@
     </div>`;
   }
 
-  // Estrellas 0–5 con curva EXIGENTE: 5/5 prácticamente solo si todo se alinea.
-  // r = 5 · (score/100)^1.5 → un 80/100 ≈ 3.6★, un 90 ≈ 4.3★, solo ~98+ llega a 5★.
+  // Estrellas DISCRETAS (1–5) según la banda del adjetivo.
   function stars(score) {
-    const norm = Math.max(0, Math.min(1, (score || 0) / 100));
-    const r = 5 * Math.pow(norm, 1.5);
-    const pct = (r / 5 * 100).toFixed(1);
-    return `<span class="sfc-stars" title="${r.toFixed(1)} / 5" aria-label="${r.toFixed(1)} de 5">
+    const n = starCount(score);
+    const pct = (n / 5 * 100).toFixed(1);
+    return `<span class="sfc-stars" title="${n} / 5" aria-label="${n} de 5">
       <span class="sfc-stars-bg">★★★★★</span>
       <span class="sfc-stars-fg" style="width:${pct}%">★★★★★</span>
     </span>`;
@@ -326,7 +338,7 @@
         </div>
         <div class="sfc-strip">
           ${chip("Ola", m1(c.waveHeight), "m", "", heightClass(c.waveHeight))}
-          ${chip("Periodo", i0(c.wavePeriod), "s", "")}
+          ${chip("Periodo", i0p(c.wavePeriod), "s", "")}
           ${chip("Swell", m1(c.swellHeight), "m", arrow(c.swellDirection))}
           ${chip("Viento", kn(c.windSpeed), "kn", arrow(c.windDirection, "wind"))}
           ${chip("Agua", i0(c.waterTemperature), "°C", "")}
@@ -341,7 +353,7 @@
       return `<div class="sfc-hr">
         <span class="sfc-ht">${fmtHour(h.timestamp)}</span>
         <span class="sfc-hcell">${m1(h.waveHeight)}<i>m</i></span>
-        <span class="sfc-hcell">${i0(h.wavePeriod)}<i>s</i></span>
+        <span class="sfc-hcell">${i0p(h.wavePeriod)}<i>s</i></span>
         <span class="sfc-hdir">${arrow(h.swellDirection)}${compass(h.swellDirection)}</span>
         <span class="sfc-hwind">${arrow(h.windDirection,"wind")}${kn(h.windSpeed)}<i>kn</i></span>
         <span class="sfc-hsc ${hb.cls}">${h.score}</span>
@@ -368,7 +380,7 @@
           <span class="sfc-dband ${b.cls}">${b.label}</span>
           <div class="sfc-dstats">
             <span class="sfc-dstat"><em>Ola</em><b class="${heightClass(e.waveMax)}">${m1(e.waveMin)}–${m1(e.waveMax)}</b><i>m</i></span>
-            <span class="sfc-dstat"><em>Periodo</em><b>${i0(e.periodDom)}</b><i>s</i></span>
+            <span class="sfc-dstat"><em>Periodo</em><b>${i0p(e.periodDom)}</b><i>s</i></span>
             <span class="sfc-dstat"><em>Swell</em><b>${arrow(e.swellDirection)} ${compass(e.swellDirection)}</b></span>
             <span class="sfc-dstat"><em>Viento</em><b>${arrow(e.windDirection,"wind")} ${kn(e.windAvg)}</b><i>kn</i></span>
           </div>
